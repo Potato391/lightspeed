@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
   }
   const cspHeader = `
     default-src 'none';
-    script-src 'none';
+    script-src 'self' 'nonce-UNIQUE_NONCE'
     style-src 'self' 'nonce-${nonce}';
     img-src 'self';
     font-src 'self';
