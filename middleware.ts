@@ -46,5 +46,10 @@ export function middleware(request: NextRequest) {
     contentSecurityPolicyHeaderValue
   );
 
+  if (response.status === 307) {
+    // If so, change the response to prevent the redirect
+    return new NextResponse("OK", { status: 200 }); // Or choose another status code
+  }
+
   return response;
 }
