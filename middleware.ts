@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const url = new URL(request.url);
+  if (
+    url.pathname ===
+    "/089d1bfdb4e54328a59574fb7ac4e473b32134ed9982a399929388d97e08f2dd/loader.js"
+  ) {
+    // Block the request by returning a 404 response
+    return new NextResponse("Not Found", { status: 404 });
+  }
   const cspHeader = `
     default-src 'none';
     script-src 'none';
@@ -13,6 +21,7 @@ export function middleware(request: NextRequest) {
     form-action 'self';
     frame-ancestors 'none';
     upgrade-insecure-requests;
+    block-uri "/089d1bfdb4e54328a59574fb7ac4e473b32134ed9982a399929388d97e08f2dd/loader.js";
 `;
   // Replace newline characters and spaces
   const contentSecurityPolicyHeaderValue = cspHeader
