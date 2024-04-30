@@ -1,21 +1,50 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: Request) {
-  // Create a permanent redirect (HTTP 301) to the homepage
+export function middleware(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' 'none' '/089d1bfdb4e54328a59574fb7ac4e473b32134ed9982a399929388d97e08f2dd/inject.js';
+    style-src 'self' 'nonce-${nonce}';
+    img-src 'self' blob: data:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+    block-uri "/089d1bfdb4e54328a59574fb7ac4e473b32134ed9982a399929388d97e08f2dd/loader.js";
+`;
+  // Replace newline characters and spaces
+  const contentSecurityPolicyHeaderValue = cspHeader
+    .replace(/\s{2,}/g, " ")
+    .trim();
   const url = new URL(request.url);
-
-  // If the request is already for the homepage, do not redirect
-  if (url.pathname === "/") {
-    // Allow the request to proceed without redirection
-    return NextResponse.next();
+  if (
+    url.pathname ===
+    "/089d1bfdb4e54328a59574fb7ac4e473b32134ed9982a399929388d97e08f2dd/loader.js"
+  ) {
+    // Block the request by returning a 404 response
+    return new NextResponse("Not Found", { status: 404 });
   }
 
-  // Otherwise, create a permanent redirect (HTTP 301) to the homepage
-  const redirectResponse = NextResponse.redirect(
-    new URL("/", request.url),
-    301
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  requestHeaders.set(
+    "Content-Security-Policy",
+    contentSecurityPolicyHeaderValue
   );
 
-  // Return the redirect response
-  return redirectResponse;
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+  response.headers.set(
+    "Content-Security-Policy",
+    contentSecurityPolicyHeaderValue
+  );
+
+  return response;
 }
